@@ -68,7 +68,8 @@ impl IntoUrlSealed for String {
 #[derive(Debug, Clone)]
 pub struct Ollama {
     pub(crate) url: Url,
-    pub(crate) reqwest_client: reqwest::Client,
+    pub(crate) reqwest_client: reqwest_middleware::ClientWithMiddleware,
+    pub(crate) streaming_client: reqwest::Client,
     #[cfg(feature = "chat-history")]
     pub(crate) messages_history: Option<WrappedMessageHistory>,
 }
@@ -82,6 +83,11 @@ impl Ollama {
         url.set_port(Some(port)).unwrap();
 
         Self::from_url(url)
+    }
+
+    pub fn with_client(mut self, new_client: reqwest_middleware::ClientWithMiddleware) -> Self {
+        self.reqwest_client = new_client;
+        self
     }
 
     /// Tries to create new instance by converting `url` into [`Url`].
@@ -144,7 +150,10 @@ impl Default for Ollama {
     fn default() -> Self {
         Self {
             url: Url::parse("http://127.0.0.1:11434").unwrap(),
-            reqwest_client: reqwest::Client::new(),
+            reqwest_client: reqwest_middleware::ClientBuilder::new(
+                reqwest::Client::new(),
+            ).build(),
+            streaming_client: reqwest::Client::new(),
             #[cfg(feature = "chat-history")]
             messages_history: None,
         }

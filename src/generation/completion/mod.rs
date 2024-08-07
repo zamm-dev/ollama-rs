@@ -33,7 +33,7 @@ impl Ollama {
         let url = format!("{}api/generate", self.url_str());
         let serialized = serde_json::to_string(&request).map_err(|e| e.to_string())?;
         let res = self
-            .reqwest_client
+            .streaming_client
             .post(url)
             .body(serialized)
             .send()
